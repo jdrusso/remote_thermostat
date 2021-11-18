@@ -28,7 +28,8 @@ def to_fahrenheit(temp_c):
 
 # Addresses are in little-endian format. They correspond to big-endian
 # 0xf0f0f0f0e1, 0xf0f0f0f0d2
-pipes = (b"\xe1\xf0\xf0\xf0\xf0", b"\xd2\xf0\xf0\xf0\xf0")
+# pipes = (b"\xe1\xf0\xf0\xf0\xf0", b"\xd2\xf0\xf0\xf0\xf0")
+pipes = (b"\xc2\xc2\xc2\xc2\xc2", b"\xf0\xf0\xf0\xf0\xf0")
 
 
 # RF_SETUP register
@@ -62,8 +63,10 @@ def remote_thermometer_loop():
     # Prep the  NRF for comms
     csn = Pin(cfg["csn"], mode=Pin.OUT, value=1)
     ce = Pin(cfg["ce"], mode=Pin.OUT, value=0)
-    nrf = NRF24L01(SPI(cfg["spi"]), csn, ce, payload_size=8)
-    nrf.set_power_speed(POWER_0, SPEED_1M)
+    nrf = NRF24L01(SPI(cfg["spi"]), csn, ce, payload_size=8, channel=46)
+    nrf.set_power_speed(POWER_2, SPEED_1M)
+    nrf.set_crc(2)
+    # nrf.set_channel(46)
 
     # Open the comm channel
     nrf.open_tx_pipe(pipes[0])
@@ -99,3 +102,5 @@ def remote_thermometer_loop():
 
         # delay then loop
         utime.sleep_ms(500)
+
+remote_thermometer_loop()
