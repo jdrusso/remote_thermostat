@@ -1,0 +1,1 @@
+/home/pi/projects/lib_nrf24/lib_nrf24.py
