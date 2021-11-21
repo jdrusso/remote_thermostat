@@ -21,6 +21,8 @@ class Schedule:
 
     def __init__(self, default_range=[70, 72, 1]):
 
+        print("Schedule object being created")
+
         self.times = []
         self.temps = []
 
@@ -35,7 +37,8 @@ class Schedule:
         if current_time is None:
             current_time = datetime.datetime.now().time()
 
-        for time_idx, time_range in self.times:
+        for time_idx, time_range in enumerate(self.times):
+            print(time_range)
             if time_range[0] < current_time <= time_range[1]:
                 current_range = self.temps[time_idx]
                 print(f"\t Schedule range is {time_range[0]} - {time_range[1]}")
@@ -49,8 +52,11 @@ class Schedule:
 
     def add_range(self, temp_range, time_range):
 
+        print("Adding schedule")
+
         # Allow setting a default range, in case no temp range has been set for the current time
         if time_range == 'default':
+            print(f"Setting default range to {temp_range}")
             self.default_range = temp_range
             return
 
@@ -72,11 +78,13 @@ class Schedule:
 
                 # And add as two independent schedule entries
                 for time_range in new_ranges:
+                    print(f"Adding range {time_range} with a midnight split")
                     self.times.append(time_range)
                     self.temps.append(temp_range)
 
             else:
                 # Add the new time and temp ranges
+                print(f"Adding time range {time_range}")
                 self.times.append(time_range)
                 self.temps.append(temp_range)
 
