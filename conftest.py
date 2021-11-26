@@ -82,9 +82,13 @@ class TestGPIO:
     # TODO: This sucks as it is. I really need a way to track state in this,
     #   but that's made a little weird because this is imported as a module,
     #   and all its functions are called as static methods.
+    #
     #   So, I can't just overload some class and store state in it. Not really
     #   sure how to track state -- some way to under the hood instantiate a class
     #   and keep track of state in it?
+    #
+    #   Then again... I'm not really testing the functionality of this, I just need
+    #   a stand-in for when I can't import RPi.GPIO...
 
     BCM = 'BCM'
     BOARD = 'BOARD'
