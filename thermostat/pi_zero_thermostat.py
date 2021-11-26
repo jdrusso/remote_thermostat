@@ -5,8 +5,6 @@
 #
 
 import RPi.GPIO as GPIO
-#from thermometer import get_temp
-#GPIO.setmode(GPIO.BOARD)
 GPIO.setmode(GPIO.BCM)
 from lib_nrf24 import NRF24
 import time
@@ -14,8 +12,6 @@ import spidev
 
 import datetime
 
-
-# Scheduling: A time range, associated with a temperature range
 
 class Schedule:
 
@@ -102,10 +98,6 @@ class Thermostat:
 
     def __init__(self, temp_select_pin, temp_control_pin, fan_pin):
 
-        # self.temp_select_pin = Pin(temp_select_pin, Pin.OUT)
-        # self.temp_control_pin = Pin(temp_control_pin, Pin.OUT)
-        # self.fan_pin = Pin(fan_pin, Pin.OUT)
-        
         self.temp_select_pin = temp_select_pin
         self.temp_control_pin = temp_control_pin
         self.fan_pin = fan_pin
@@ -120,18 +112,14 @@ class Thermostat:
         self.schedule = Schedule()
 
     def fan_on(self):
-        # self.fan_pin.on()
         GPIO.output(self.fan_pin, True)
         self.fan_is_on = True
 
     def fan_off(self):
-        # self.fan_pin.off()
         GPIO.output(self.fan_pin, False)
         self.fan_is_on = False
 
     def heat_on(self):
-        # self.temp_select_pin.on()
-        # self.temp_control_pin.on()
         GPIO.output(self.temp_select_pin, False)
         GPIO.output(self.temp_control_pin, True)
 
@@ -140,8 +128,6 @@ class Thermostat:
         self.cooling = False
 
     def ac_on(self):
-        # self.temp_select_pin.off()
-        # self.temp_control_pin.on()
         GPIO.output(self.temp_select_pin, True)
         GPIO.output(self.temp_control_pin, True)
 
@@ -150,7 +136,6 @@ class Thermostat:
         self.cooling = True
 
     def all_off(self):
-        # self.temp_control_pin.off()
         GPIO.output(self.temp_control_pin, False)
         GPIO.output(self.temp_select_pin, False)
         self.fan_off()
@@ -191,25 +176,19 @@ class Thermostat:
 
         else:
             pass
-            #print("Turning off")
-            #self.all_off()
 
 
 def get_remote_temp(radio):
 
-    akpl_buf = [c,1, 2, 3,4,5,6,7,8,9,0,1, 2, 3,4,5,6,7,8]
     pipe = [1]
 
     print(radio.whatHappened())
-    
+
     while not radio.available(pipe):
         time.sleep(0.1)
 
     recv_buffer = []
     radio.read(recv_buffer, 8)
-
-    # print ("Received:") ,
-    # print (recv_buffer)
 
     temp = int.from_bytes(recv_buffer[4:], 'little') / 100
 
@@ -219,11 +198,9 @@ def get_remote_temp(radio):
 if __name__=="__main__":
 
     # Initialize thermostat
-
     temp_control_pin = 13
     temp_select_pin = 16
     fan_pin = 26
-
     thermostat = Thermostat(temp_control_pin=temp_control_pin,
                             temp_select_pin=temp_select_pin,
                             fan_pin=fan_pin)
@@ -237,7 +214,6 @@ if __name__=="__main__":
     thermostat.all_off()
 
     # Initialize radio
-
     pipes = [[0xc2, 0xc2, 0xc2, 0xc2, 0xc2], [0xf0, 0xf0, 0xf0, 0xf0, 0xf0]]
 
     radio2 = NRF24(GPIO, spidev.SpiDev())
@@ -248,7 +224,6 @@ if __name__=="__main__":
     radio2.setPayloadSize(8)
     radio2.setChannel(120)
     radio2.setDataRate(NRF24.BR_2MBPS)
-    #radio2.setDataRate(NRF24.BR_250KBPS)
     radio2.setPALevel(NRF24.PA_MIN)
 
     radio2.openWritingPipe(pipes[1])
@@ -265,19 +240,17 @@ if __name__=="__main__":
 
     radio2.startListening()
 
-    c=1
+    c = 1
 
     print("Entering main loop")
 
     while True:
 
-        
+
         # Block on this, with a timeout
-        # recv_temp = get_remote_temp(nrf)
-        # print("Received temp is " + str(recv_temp))
         recv_temp = get_remote_temp(radio2)
         print("Temp is " + str(recv_temp) + " Fahrenheit")
-    
+
         if recv_temp > -100:
             invalid_responses = 0
             cur_temp = recv_temp
