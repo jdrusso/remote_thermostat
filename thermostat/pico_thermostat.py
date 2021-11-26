@@ -1,4 +1,8 @@
 """
+THIS IS SUPER EXPERIMENTAL AND DOESN'T WORK!
+"""
+
+"""
 Code for the thermostat.
 
 This code mainly does the following:
@@ -133,11 +137,11 @@ def thermostat_loop():
     invalid_responses = 0
 
     while True:
-        
+
         # Block on this, with a timeout
         recv_temp = get_remote_temp(nrf)
         print("Received temp is " + str(recv_temp))
-    
+
         if recv_temp > -100:
             invalid_responses = 0
             cur_temp = recv_temp
