@@ -9,6 +9,9 @@ import time
 import spidev
 import datetime
 
+import logging
+logger = logging.getLogger('thermostat')
+
 GPIO.setmode(GPIO.BCM)
 
 
@@ -16,7 +19,7 @@ class Schedule:
 
     def __init__(self, default_range=[70, 72, 1]):
 
-        print("Schedule object being created")
+        logger.debug("Schedule object being created")
 
         self.times = []
         self.temps = []
@@ -33,25 +36,25 @@ class Schedule:
             current_time = datetime.datetime.now().time()
 
         for time_idx, time_range in enumerate(self.times):
-            print(time_range)
+            logger.debug(time_range)
             if time_range[0] < current_time <= time_range[1]:
                 current_range = self.temps[time_idx]
-                print(f"\t Schedule range is {time_range[0]} - {time_range[1]}")
+                logger.debug(f"\t Schedule range is {time_range[0]} - {time_range[1]}")
                 break
             else:
                 pass
 
-        print(f"\t At time {current_time}, the target temp range is {current_range[0]} - {current_range[1]}.")
+        logger.debug(f"\t At time {current_time}, the target temp range is {current_range[0]} - {current_range[1]}.")
 
         return current_range
 
     def add_range(self, temp_range, time_range):
 
-        print("Adding schedule")
+        logger.debug("Adding schedule")
 
         # Allow setting a default range, in case no temp range has been set for the current time
         if time_range == 'default':
-            print(f"Setting default range to {temp_range}")
+            logger.info(f"Setting default range to {temp_range}")
             self.default_range = temp_range
             return
 
@@ -73,13 +76,13 @@ class Schedule:
 
                 # And add as two independent schedule entries
                 for time_range in new_ranges:
-                    print(f"Adding range {time_range} with a midnight split")
+                    logger.info(f"Adding range {time_range} with a midnight split")
                     self.times.append(time_range)
                     self.temps.append(temp_range)
 
             else:
                 # Add the new time and temp ranges
-                print(f"Adding time range {time_range}")
+                logger.info(f"Adding time range {time_range}")
                 self.times.append(time_range)
                 self.temps.append(temp_range)
 
@@ -157,14 +160,14 @@ class Thermostat:
 
         self.set_target_temp_range(*self.schedule.get_current_target_temp_range())
 
-        print("Thermostat state updating -- {%.2f} | [%.2f - %.2f]" % (current_temp, self.low_temp, self.high_temp))
+        logger.debug("Thermostat state updating -- {%.2f} | [%.2f - %.2f]" % (current_temp, self.low_temp, self.high_temp))
 
         if current_temp < self.low_temp:
-            print("Turning on heat")
+            logger.debug("Turning on heat")
             self.heat_on()
 
         elif current_temp > self.high_temp:
-            print("Turning on AC")
+            logger.debug("Turning on AC")
             self.ac_on()
 
         elif self.heating and current_temp > self.low_temp + self.hysteresis:
@@ -195,6 +198,8 @@ def get_remote_temp(radio):
 
 
 if __name__=="__main__":
+
+    logger.setLevel(logging.DEBUG)
 
     # Initialize thermostat
     temp_control_pin = 13
@@ -235,13 +240,13 @@ if __name__=="__main__":
 
     time.sleep(0)
 
-    print(radio2.whatHappened())
+    logger.debug(radio2.whatHappened())
 
     radio2.startListening()
 
     c = 1
 
-    print("Entering main loop")
+    logger.info("Entering main loop")
 
     while True:
 
