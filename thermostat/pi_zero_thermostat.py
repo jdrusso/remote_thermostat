@@ -171,6 +171,7 @@ class Thermostat:
 
     def update_state(self, current_temp):
 
+        print('\n')
         self.set_target_temp_range(*self.schedule.get_current_target_temp_range())
 
         print("Thermostat state updating -- {%.2f} | [%.2f - %.2f]" % (current_temp, self.low_temp, self.high_temp))
@@ -228,8 +229,12 @@ if __name__=="__main__":
                             temp_select_pin=temp_select_pin,
                             fan_pin=fan_pin)
 
-    # From 8AM to 11PM, set the temp to 71-73 with 1.5 degree hysteresis
-    thermostat.schedule.add_range([71, 73, 1.5], [datetime.time(8, 0), datetime.time(23, 0)])
+
+    # From 8AM to 12PM, set the temp to 70-75 with 1.5 degree hysteresis
+    thermostat.schedule.add_range([70, 75, 1.5], [datetime.time(8, 0), datetime.time(12, 0)])
+    
+    # From 12PM to 11PM, set the temp to 71-73 with 1.5 degree hysteresis
+    thermostat.schedule.add_range([73, 75, 1.5], [datetime.time(12, 0), datetime.time(23, 0)])
 
     # From 11PM to 8AM, set the temp to 62-69 with 1.5 degree hysteresis
     thermostat.schedule.add_range([62, 69, 1.5], [datetime.time(23, 0), datetime.time(8, 0)])
