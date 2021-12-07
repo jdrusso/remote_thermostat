@@ -13,7 +13,8 @@ import time
 import spidev
 
 import datetime
-
+from PIL import Image, ImageDraw, ImageFont
+import ST7735
 
 # Scheduling: A time range, associated with a temperature range
 
@@ -195,7 +196,6 @@ class Thermostat:
             #print("Turning off")
             #self.all_off()
 
-
 def get_remote_temp(radio):
 
     akpl_buf = [c,1, 2, 3,4,5,6,7,8,9,0,1, 2, 3,4,5,6,7,8]
@@ -219,6 +219,33 @@ def get_remote_temp(radio):
 
 if __name__=="__main__":
 
+    # Initialize display
+    disp = ST7735.ST7735(
+        port=0,
+        cs=1,
+        #cs=ST7735.BG_SPI_CS_FRONT,  # BG_SPI_CSB_BACK or BG_SPI_CS_FRONT
+        dc=27,
+        rst=17,
+        width=128,
+        height=128,
+        backlight=22, # 18 for back BG slot, 19 for front BG slot.
+        rotation=180,
+        invert=False,
+        spi_speed_hz=24000000,
+        offset_top=3,
+    )
+    disp.begin()
+    width = disp.width
+    height = disp.height
+
+    img = Image.new('RGB', (width, height), color=(0,0,0))
+    draw = ImageDraw.Draw(img)
+    font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 14) 
+    MESSAGE = 'INITIALIZING'
+    size_x, size_y = draw.textsize(MESSAGE, font)
+    draw.text((0,0), MESSAGE, font=font, fill=(255,255,255))
+    disp.display(img)
+
     # Initialize thermostat
 
     temp_control_pin = 13
@@ -234,7 +261,7 @@ if __name__=="__main__":
     thermostat.schedule.add_range([70, 75, 1.5], [datetime.time(8, 0), datetime.time(12, 0)])
     
     # From 12PM to 11PM, set the temp to 71-73 with 1.5 degree hysteresis
-    thermostat.schedule.add_range([73, 75, 1.5], [datetime.time(12, 0), datetime.time(23, 0)])
+    thermostat.schedule.add_range([73, 75, 0.75], [datetime.time(12, 0), datetime.time(23, 0)])
 
     # From 11PM to 8AM, set the temp to 62-69 with 1.5 degree hysteresis
     thermostat.schedule.add_range([62, 69, 1.5], [datetime.time(23, 0), datetime.time(8, 0)])
@@ -300,3 +327,40 @@ if __name__=="__main__":
         print("Current temp is " + str(cur_temp) + "F")
         time.sleep(.500)
 
+        # Update display with
+        #   Target
+        #   Current
+        #   Status
+        #   Last received
+        status = 'NONE'
+        if thermostat.heating:
+            status = "HEAT"
+            stat_color = (225, 6, 0)
+        elif thermostat.cooling:
+            status = "COOL"
+            stat_color = (0, 255, 255)
+        else:
+            status = "OFF"
+            stat_color = (255, 255, 255)
+        cur_color = (255,255,255)
+
+        img = Image.new('RGB', (width, height), color=(0,0,0))
+        draw = ImageDraw.Draw(img)
+        small_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 14)
+        big_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 24)
+        real_big_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 28)
+
+        TGT_MESSAGE = f"TGT: {thermostat.low_temp} - {thermostat.high_temp}"
+        CUR_MESSAGE =    f"   {cur_temp:.1f}"
+        STATUS_MESSAGE = f"  {status}"
+        LAST_MESSAGE = f"Last: {datetime.datetime.now().time():%H:%M:%S}"
+        
+        text_width, small_height = draw.textsize(TGT_MESSAGE, small_font)
+        text_width, big_height = draw.textsize(TGT_MESSAGE, big_font)
+
+        draw.text((0,0), TGT_MESSAGE, font=small_font, fill=(255,255,255))
+        draw.text((0, small_height*2), CUR_MESSAGE, font=real_big_font, fill=cur_color)
+        draw.text((0, small_height*1 + big_height*2), STATUS_MESSAGE, font=real_big_font, fill=stat_color)
+        draw.text((0, small_height*1 + big_height*4), LAST_MESSAGE, font=small_font, fill=(255,255,255))
+
+        disp.display(img)
