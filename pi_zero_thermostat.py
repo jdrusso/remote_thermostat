@@ -11,7 +11,10 @@ from rich.console import Console
 from convenience.conversions import *
 from convenience.radio import *
 from convenience.fonts import *
+from thermostat import Thermostat
 
+import logging
+from rich.logging import RichHandler
 
 ### Set up logging
 logfile_console = Console(
@@ -19,11 +22,8 @@ logfile_console = Console(
     log_time_format="[%x_%X]",
 )
 
-from thermostat import Thermostat
 
 # Props to https://stackoverflow.com/a/11784984
-import logging
-from rich.logging import RichHandler
 FORMAT = "%(message)s"
 logging.basicConfig(
     format=FORMAT,
@@ -34,9 +34,13 @@ logging.basicConfig(
 
 TEMP_LEVEL_NUM = 5
 logging.addLevelName(TEMP_LEVEL_NUM, "TEMP")
+
+
 def temp_log(self, message, *args, **kws):
     if self.isEnabledFor(TEMP_LEVEL_NUM):
         self._log(TEMP_LEVEL_NUM, message, args, **kws)
+
+
 logging.Logger.temp = temp_log
 log = logging.getLogger()
 
@@ -44,7 +48,7 @@ log = logging.getLogger()
 if __name__ == "__main__":
 
     # Initialize display
-    disp = ST7735.ST7735(
+    display = ST7735.ST7735(
         port=0,
         cs=1,
         # cs=ST7735.BG_SPI_CS_FRONT,  # BG_SPI_CSB_BACK or BG_SPI_CS_FRONT
@@ -58,9 +62,9 @@ if __name__ == "__main__":
         spi_speed_hz=24000000,
         offset_top=3,
     )
-    disp.begin()
-    width = disp.width
-    height = disp.height
+    display.begin()
+    width = display.width
+    height = display.height
 
     # Display initialization message
     img = Image.new("RGB", (width, height), color=(0, 0, 0))
@@ -68,7 +72,7 @@ if __name__ == "__main__":
     MESSAGE = "INITIALIZING"
     size_x, size_y = draw.textsize(MESSAGE, init_font)
     draw.text((0, 0), MESSAGE, font=init_font, fill=(255, 255, 255))
-    disp.display(img)
+    display.display(img)
 
     # Initialize thermostat
 
@@ -238,4 +242,4 @@ if __name__ == "__main__":
             fill=(255, 255, 255),
         )
 
-        disp.display(img)
+        display.display(img)
