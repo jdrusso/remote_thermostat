@@ -4,10 +4,8 @@
 import json
 import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM)
-from lib_nrf24 import NRF24
-import time
 import datetime
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 import ST7735
 from w1thermsensor import W1ThermSensor
 from rich.console import Console
@@ -43,21 +41,6 @@ def temp_log(self, message, *args, **kws):
 
 logging.Logger.temp = temp_log
 log = logging.getLogger()
-
-
-# Some fonts that we'll use to draw the display
-small_font = ImageFont.truetype(
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 14
-)
-big_font = ImageFont.truetype(
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 24
-)
-real_big_font = ImageFont.truetype(
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 28
-)
-init_font = ImageFont.truetype(
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 14
-)
 
 
 if __name__ == "__main__":
