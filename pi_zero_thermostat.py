@@ -280,6 +280,28 @@ def get_remote_temp(radio):
     return temp
 
 
+def open_radio(ce_pin, csn_pin, pa_level, datarate, write_pipe, read_pipe, crc, channel=120, _retries=15):
+    radio2 = NRF24(GPIO, spidev.SpiDev())
+    radio2.begin(ce_pin=ce_pin, csn_pin=csn_pin)
+    radio2.setRetries(_retries, _retries)
+    radio2.setPayloadSize(8)
+    radio2.setChannel(channel)
+    radio2.setDataRate(datarate)
+    radio2.setPALevel(pa_level)
+    radio2.openWritingPipe(write_pipe)
+    radio2.openReadingPipe(1, read_pipe)
+    radio2.setCRCLength(crc)
+    radio2.printDetails()
+    radio2.flush_rx()
+
+    time.sleep(0.01)
+    log.debug(radio2.whatHappened())
+
+    radio2.startListening()
+
+    return radio2
+
+
 if __name__=="__main__":
 
     # Initialize display
@@ -407,27 +429,20 @@ if __name__=="__main__":
                 radio2.flush_rx()
                 radio2.flush_tx()
                 radio2.end()
-            
-                radio2 = NRF24(GPIO, spidev.SpiDev())
-                radio2.begin(ce_pin=19, csn_pin=0)
-                radio2.setRetries(15,15)
-                radio2.setPayloadSize(8)
-                radio2.setChannel(120)
-                radio2.setDataRate(NRF24.BR_2MBPS)
-                radio2.setPALevel(NRF24.PA_LOW)
-                radio2.openWritingPipe(pipes[1])
-                radio2.openReadingPipe(1, pipes[0])
-                radio2.setCRCLength(NRF24.CRC_16)
-                radio2.printDetails()
-                radio2.flush_rx()
-                time.sleep(0.01)
-                log.debug(radio2.whatHappened())
+
+                radio2 = open_radio(ce_pin=19, csn_pin=0,
+                                    pa_level=NRF24.PA_LOW,
+                                    datarate=NRF24.BR_2MBPS,
+                                    write_pipe=pipes[1], read_pipe=pipes[0],
+                                    crc=NRF24.CRC_16)
 
                 radio2.startListening()
                 retries += 1
 
                 if retries > 2:
-                    thermostat.all_off()
+                    # thermostat.all_off()
+                    log.error("Couldn't get temperature. Falling back to local.")
+                    recv_temp = local_temp
                 # recv_temp = get_remote_temp(radio2)
 
         #log.info("Temp is " + str(recv_temp) + " Fahrenheit")
