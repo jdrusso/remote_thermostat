@@ -1,13 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Example program to receive packets from the radio link
-#
 import json
 import RPi.GPIO as GPIO
 
-# from thermometer import get_temp
-# GPIO.setmode(GPIO.BOARD)
 GPIO.setmode(GPIO.BCM)
 from lib_nrf24 import NRF24
 import time
@@ -29,9 +25,7 @@ logfile_console = Console(
 # Props to https://stackoverflow.com/a/11784984
 import logging
 from rich.logging import RichHandler
-
 TEMP_LEVEL_NUM = 5
-
 FORMAT = "%(message)s"
 logging.basicConfig(
     format=FORMAT,
@@ -39,7 +33,6 @@ logging.basicConfig(
     datefmt="[%x %X]",
     handlers=[RichHandler(), RichHandler(console=logfile_console)],
 )
-
 logging.addLevelName(TEMP_LEVEL_NUM, "TEMP")
 
 
@@ -51,6 +44,8 @@ def temp_log(self, message, *args, **kws):
 logging.Logger.temp = temp_log
 log = logging.getLogger()
 
+
+# Some fonts that we'll use to draw the display
 small_font = ImageFont.truetype(
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 14
 )
@@ -89,8 +84,6 @@ def calibrate_temp(fahrenheit, low, high):
 
 
 # Scheduling: A time range, associated with a temperature range
-
-
 class Schedule:
     def __init__(self, default_range=[70, 72, 1]):
 
@@ -115,12 +108,10 @@ class Schedule:
         for time_idx, time_range in enumerate(self.times):
             if time_range[0] < current_time <= time_range[1]:
                 current_range = self.temps[time_idx]
-                # self.log.info(f"\t Schedule range is {time_range[0]} - {time_range[1]}")
                 break
             else:
                 pass
 
-        # self.log.info(f"At time {current_time:%H:%M:%S}, the target temp range is {current_range[0]} - {current_range[1]}.")
 
         return current_range
 
@@ -178,9 +169,6 @@ class Schedule:
 class Thermostat:
     def __init__(self, temp_select_pin, temp_control_pin, fan_pin):
 
-        # self.temp_select_pin = Pin(temp_select_pin, Pin.OUT)
-        # self.temp_control_pin = Pin(temp_control_pin, Pin.OUT)
-        # self.fan_pin = Pin(fan_pin, Pin.OUT)
 
         self.temp_select_pin = temp_select_pin
         self.temp_control_pin = temp_control_pin
@@ -198,18 +186,14 @@ class Thermostat:
         self.log.setLevel(logging.DEBUG)
 
     def fan_on(self):
-        # self.fan_pin.on()
         GPIO.output(self.fan_pin, True)
         self.fan_is_on = True
 
     def fan_off(self):
-        # self.fan_pin.off()
         GPIO.output(self.fan_pin, False)
         self.fan_is_on = False
 
     def heat_on(self):
-        # self.temp_select_pin.on()
-        # self.temp_control_pin.on()
         GPIO.output(self.temp_select_pin, False)
         GPIO.output(self.temp_control_pin, True)
 
@@ -218,8 +202,6 @@ class Thermostat:
         self.cooling = False
 
     def ac_on(self):
-        # self.temp_select_pin.off()
-        # self.temp_control_pin.on()
         GPIO.output(self.temp_select_pin, True)
         GPIO.output(self.temp_control_pin, True)
 
@@ -228,7 +210,6 @@ class Thermostat:
         self.cooling = True
 
     def all_off(self, reset_hysteresis=True):
-        # self.temp_control_pin.off()
         GPIO.output(self.temp_control_pin, False)
         GPIO.output(self.temp_select_pin, False)
         self.fan_off()
@@ -237,8 +218,8 @@ class Thermostat:
             self.heating = False
             self.cooling = False
 
-    def set_target_temp_range(self, low_temp, high_temp, hysteresis=1):
-        # This is deprecated now in favor of using a Schedule()
+    def _set_target_temp_range(self, low_temp, high_temp, hysteresis=1):
+        # This is called via update_state, and shouldn't be called directly.
 
         assert low_temp < high_temp, "Invalid temp range -- provide as [low, high]"
         assert low_temp < (
@@ -251,7 +232,7 @@ class Thermostat:
 
     def update_state(self, current_temp):
 
-        self.set_target_temp_range(*self.schedule.get_current_target_temp_range())
+        self._set_target_temp_range(*self.schedule.get_current_target_temp_range())
 
         self.log.info(
             "Thermostat state updating -- {%.2f} ({%.2f}) | [%.2f - %.2f]"
