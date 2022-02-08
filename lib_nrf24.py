@@ -4,6 +4,7 @@
 
 
 # This file lib_nrf24.py is a slightly tweaked version of Barraca's "pynrf24".
+# SOURCE: https://github.com/BLavery/lib_nrf24
 
 # So this is my tweak for Raspberry Pi and "Virtual GPIO" ...
 #       ... of Barraca's port to BeagleBone python ...  (Joao Paulo Barraca <jpbarraca@gmail.com>)
