@@ -424,7 +424,10 @@ if __name__=="__main__":
             try:
                 recv_temp = get_remote_temp(radio2)
                 break
+
             except Exception:
+                # If you fail to read the radio, reset everything and try again a couple times.
+
                 # thermostat.all_off()
                 log.error("Failed to get response - trying again...")
                 radio2.stopListening()
@@ -445,6 +448,7 @@ if __name__=="__main__":
                     # thermostat.all_off(reset_hysteresis=False)
                     log.error("Couldn't get temperature. Falling back to local.")
                     recv_temp = local_temp
+                    break
                 # recv_temp = get_remote_temp(radio2)
 
         #log.info("Temp is " + str(recv_temp) + " Fahrenheit")
