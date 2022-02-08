@@ -64,7 +64,12 @@ class Display:
         draw.text((0, 0), MESSAGE, font=init_font, fill=(255, 255, 255))
         self.refresh_display(img)
 
-    def update_thermostat_display(self, low_temp, high_temp, local_temp, cur_temp, status, last_update):
+    def update_thermostat_display(self,
+                                  low_temp, high_temp,
+                                  local_temp, cur_temp,
+                                  status,
+                                  last_update,
+                                  cur_color, stat_color):
 
         # Update display with
         #   Target

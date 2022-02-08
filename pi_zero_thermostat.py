@@ -3,13 +3,11 @@
 #
 import json
 import datetime
-from PIL import Image, ImageDraw
 from w1thermsensor import W1ThermSensor
 from rich.console import Console
 
 from convenience.conversions import *
 from convenience.radio import *
-from convenience.fonts import *
 from convenience.display import Display
 from convenience.display import Colors
 from thermostat import Thermostat
@@ -168,19 +166,19 @@ if __name__ == "__main__":
         status = "NONE"
         if thermostat.heating:
             status = "HEAT"
-            stat_color = colors.RED
+            stat_color = Colors.RED
         elif thermostat.cooling:
             status = "COOL"
-            stat_color = colors.BLUE
+            stat_color = Colors.BLUE
         else:
             status = "OFF"
-            stat_color = colors.WHITE
+            stat_color = Colors.WHITE
 
         # Make the temperature color yellow if you had to fall back to local temp
         if retries > 2:
-            cur_color = colors.YELLOW
+            cur_color = Colors.YELLOW
         else:
-            cur_color = colors.WHITE
+            cur_color = Colors.WHITE
 
         display.update_thermostat_display(
             low_temp=thermostat.low_temp,
@@ -188,5 +186,7 @@ if __name__ == "__main__":
             local_temp=calibrated_local_temp,
             cur_temp=cur_temp,
             status=status,
-            last_update=datetime.datetime.now().time()
+            last_update=datetime.datetime.now().time(),
+            cur_color=cur_color,
+            stat_color=stat_color
         )
