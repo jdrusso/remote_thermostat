@@ -409,11 +409,11 @@ if __name__=="__main__":
     while True:
 
         
-        local_temp = to_fahrenheit(sensor.get_temperature())
-        raw_local_temp = local_temp
-        local_temp = calibrate_temp(local_temp, *thermostat_thermometer_calibration)
+        raw_local_temp = to_fahrenheit(sensor.get_temperature())
+        # raw_local_temp = local_temp
+        calibrated_local_temp = calibrate_temp(raw_local_temp, *thermostat_thermometer_calibration)
         #local_temp = 20
-        thermostat.local_temp = local_temp
+        thermostat.local_temp = calibrated_local_temp
 
         # Block on this, with a timeout
         # recv_temp = get_remote_temp(nrf)
@@ -422,7 +422,10 @@ if __name__=="__main__":
         retries = 0
         while True:
             try:
-                recv_temp = get_remote_temp(radio2)
+                raw_remote_temp = get_remote_temp(radio2)
+                calibrated_remote_temp = calibrate_temp(raw_remote_temp, *remote_thermometer_calibration)
+
+                recv_temp = calibrated_remote_temp
                 break
 
             except Exception:
@@ -447,7 +450,7 @@ if __name__=="__main__":
                 if retries > 2:
                     # thermostat.all_off(reset_hysteresis=False)
                     log.error("Couldn't get temperature. Falling back to local.")
-                    recv_temp = local_temp
+                    recv_temp = calibrated_local_temp
                     break
                 # recv_temp = get_remote_temp(radio2)
 
@@ -464,10 +467,10 @@ if __name__=="__main__":
             #temp_f = to_fahrenheit(corrected_temp)
             #cur_temp = temp_f
             
-            calibrated_temp = calibrate_temp(cur_temp, *remote_thermometer_calibration)
-            log.info(f"Remote| Current: {cur_temp:.2f}. Calibrated: {calibrated_temp:.2f}")
-            log.info(f"Local|  Current: {raw_local_temp:.2f}. Calibrated: {local_temp:.2f}")
-            cur_temp = calibrated_temp
+            # calibrated_temp = calibrate_temp(cur_temp, *remote_thermometer_calibration)
+            log.info(f"Remote| Current: {raw_remote_temp:.2f}. Calibrated: {calibrated_remote_temp:.2f}")
+            log.info(f"Local|  Current: {raw_local_temp:.2f}. Calibrated: {calibrated_local_temp:.2f}")
+            # cur_temp = calibrated_temp
 
             # Only update thermostat state if we're actually getting input
             thermostat.update_state(current_temp=cur_temp)
@@ -480,7 +483,7 @@ if __name__=="__main__":
             log.warning(">100 invalid responses received. Turning off thermostat until I get valid responses.")
             thermostat.all_off()
 
-        log.temp(f"{time.time():.0f},{cur_temp:.2f},{local_temp:.2f}")
+        log.temp(f"{time.time():.0f},{calibrated_remote_temp:.2f},{calibrated_local_temp:.2f}")
         #log.info("Current temp is " + str(cur_temp) + "F")
         time.sleep(1.0)
 
@@ -507,7 +510,7 @@ if __name__=="__main__":
         big_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 24)
         real_big_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 28)
 
-        TGT_MESSAGE = f"[{thermostat.low_temp} - {thermostat.high_temp}] | {local_temp:.1f}"
+        TGT_MESSAGE = f"[{thermostat.low_temp} - {thermostat.high_temp}] | {calibrated_local_temp:.1f}"
         CUR_MESSAGE =    f"   {cur_temp:.1f}"
         STATUS_MESSAGE = f"  {status}"
         LAST_MESSAGE = f"Last: {datetime.datetime.now().time():%H:%M:%S}"
