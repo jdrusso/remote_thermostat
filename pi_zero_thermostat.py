@@ -6,12 +6,14 @@ import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM)
 from lib_nrf24 import NRF24
 import time
-import spidev
 import datetime
 from PIL import Image, ImageDraw, ImageFont
 import ST7735
 from w1thermsensor import W1ThermSensor
 from rich.console import Console
+
+from convenience.conversions import *
+from convenience.radio import *
 
 logfile_console = Console(
     file=open(f'logfiles/thermostat_{time.strftime("%m_%d_%Y-%H_%M")}.log', "a"),
@@ -56,91 +58,6 @@ real_big_font = ImageFont.truetype(
 init_font = ImageFont.truetype(
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 14
 )
-
-
-def to_fahrenheit(celsius):
-
-    return celsius * (9 / 5) + 32
-
-
-def to_celsius(fahrenheit):
-
-    return (fahrenheit - 32) * (5 / 9)
-
-
-def calibrate_temp(fahrenheit, low, high):
-
-    temp_c = to_celsius(fahrenheit)
-    low_c = to_celsius(low)
-    high_c = to_celsius(high)
-
-    # Using ref high and low temps from calibration
-    corrected_temp = (temp_c - low_c) * 100 / (high_c - low_c)
-    temp_f = to_fahrenheit(corrected_temp)
-
-    return temp_f
-
-
-def get_remote_temp(radio):
-
-    pipe = [1]
-
-    # Timeout, in seconds
-    wait_threshold = 10
-    last_received = time.time()
-
-    log.debug(radio.whatHappened())
-
-    radio.flush_rx()
-
-    while not radio.available(pipe):
-        time.sleep(0.1)
-        if time.time() - last_received > wait_threshold:
-            log.error(
-                f"Timeout reached! {wait_threshold} seconds since last temperature received"
-            )
-            raise Exception
-
-    log.debug("Received")
-
-    recv_buffer = []
-    radio.read(recv_buffer, 8)
-
-    temp = int.from_bytes(recv_buffer[4:], "little") / 100
-
-    return temp
-
-
-def open_radio(
-    ce_pin,
-    csn_pin,
-    pa_level,
-    datarate,
-    write_pipe,
-    read_pipe,
-    crc,
-    channel=120,
-    _retries=15,
-):
-    radio2 = NRF24(GPIO, spidev.SpiDev())
-    radio2.begin(ce_pin=ce_pin, csn_pin=csn_pin)
-    radio2.setRetries(_retries, _retries)
-    radio2.setPayloadSize(8)
-    radio2.setChannel(channel)
-    radio2.setDataRate(datarate)
-    radio2.setPALevel(pa_level)
-    radio2.openWritingPipe(write_pipe)
-    radio2.openReadingPipe(1, read_pipe)
-    radio2.setCRCLength(crc)
-    radio2.printDetails()
-    radio2.flush_rx()
-
-    time.sleep(0.01)
-    log.debug(radio2.whatHappened())
-
-    radio2.startListening()
-
-    return radio2
 
 
 if __name__ == "__main__":
