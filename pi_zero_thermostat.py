@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 #
 import json
-import RPi.GPIO as GPIO
-GPIO.setmode(GPIO.BCM)
 import datetime
 from PIL import Image, ImageDraw
 import ST7735
@@ -14,6 +12,8 @@ from convenience.conversions import *
 from convenience.radio import *
 from convenience.fonts import *
 
+
+### Set up logging
 logfile_console = Console(
     file=open(f'logfiles/thermostat_{time.strftime("%m_%d_%Y-%H_%M")}.log', "a"),
     log_time_format="[%x_%X]",
@@ -24,7 +24,6 @@ from thermostat import Thermostat
 # Props to https://stackoverflow.com/a/11784984
 import logging
 from rich.logging import RichHandler
-TEMP_LEVEL_NUM = 5
 FORMAT = "%(message)s"
 logging.basicConfig(
     format=FORMAT,
@@ -32,14 +31,12 @@ logging.basicConfig(
     datefmt="[%x %X]",
     handlers=[RichHandler(), RichHandler(console=logfile_console)],
 )
+
+TEMP_LEVEL_NUM = 5
 logging.addLevelName(TEMP_LEVEL_NUM, "TEMP")
-
-
 def temp_log(self, message, *args, **kws):
     if self.isEnabledFor(TEMP_LEVEL_NUM):
         self._log(TEMP_LEVEL_NUM, message, args, **kws)
-
-
 logging.Logger.temp = temp_log
 log = logging.getLogger()
 
