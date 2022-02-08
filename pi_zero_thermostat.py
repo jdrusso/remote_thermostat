@@ -459,7 +459,7 @@ if __name__=="__main__":
 
         #log.info("Temp is " + str(recv_temp) + " Fahrenheit")
     
-        if 300 > recv_temp > -100:
+        if 100 > recv_temp > 0:
             invalid_responses = 0
             cur_temp = recv_temp
 
