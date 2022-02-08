@@ -1,0 +1,25 @@
+{
+  "schedules": [
+    {
+      "name":  "morning",
+      "times": [8, 0],
+      "end": [10, 0],
+      "temp_range": [69, 74],
+      "hysteresis": 1.5
+    },
+    {
+      "name":  "day",
+      "start": [10, 0],
+      "end": [23, 0],
+      "temp_range": [72, 75],
+      "hysteresis": 1.0
+    },
+    {
+      "name":  "night",
+      "start": [23, 0],
+      "end": [8, 0],
+      "temp_range": [62, 69],
+      "hysteresis": 1.0
+    }
+  ]
+}

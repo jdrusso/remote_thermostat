@@ -3,7 +3,7 @@
 #
 # Example program to receive packets from the radio link
 #
-
+import json
 import RPi.GPIO as GPIO
 #from thermometer import get_temp
 #GPIO.setmode(GPIO.BOARD)
@@ -304,7 +304,7 @@ def open_radio(ce_pin, csn_pin, pa_level, datarate, write_pipe, read_pipe, crc, 
     return radio2
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
 
     # Initialize display
     disp = ST7735.ST7735(
@@ -325,6 +325,7 @@ if __name__=="__main__":
     width = disp.width
     height = disp.height
 
+    # Display initialization message
     img = Image.new('RGB', (width, height), color=(0,0,0))
     draw = ImageDraw.Draw(img)
     font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 14) 
@@ -343,16 +344,14 @@ if __name__=="__main__":
                             temp_select_pin=temp_select_pin,
                             fan_pin=fan_pin)
 
+    with open('schedule.json', 'r') as schedule_file:
+        schedules = json.load(schedule_file)['schedule']
 
-    # From 8AM to 12PM, set the temp to 70-75 with 1.5 degree hysteresis
-    thermostat.schedule.add_range([69, 74, 1.5], [datetime.time(8, 0), datetime.time(10, 0)])
-    
-    # From 12PM to 11PM, set the temp to 71-73 with 1.5 degree hysteresis
-    thermostat.schedule.add_range([72, 75, 1.00], [datetime.time(10, 0), datetime.time(23, 0)])
-
-    # From 11PM to 8AM, set the temp to 62-69 with 1.5 degree hysteresis
-    thermostat.schedule.add_range([62, 69, 1.], [datetime.time(23, 0), datetime.time(8, 0)])
-    #thermostat.schedule.add_range([62, 67, 1.], [datetime.time(0, 0), datetime.time(2, 30)])
+        for schedule in schedules:
+            thermostat.schedule.add_range(
+                [*schedule['temp_range'], schedule['hysteresis']],
+                [datetime.time(*schedule['start']), datetime.time(*schedule['end'])],
+            )
 
     thermostat.all_off()
 
@@ -362,41 +361,13 @@ if __name__=="__main__":
 
     time.sleep(0.01)
 
-    radio2 = NRF24(GPIO, spidev.SpiDev())
+    radio2 = open_radio(ce_pin=19, csn_pin=0,
+                        pa_level=NRF24.PA_LOW,
+                        datarate=NRF24.BR_2MBPS,
+                        write_pipe=pipes[1], read_pipe=pipes[0],
+                        crc=NRF24.CRC_16)
 
-    time.sleep(0.01)
-
-    #radio2.begin(ce_pin=25, csn_pin=0)
-    radio2.begin(ce_pin=19, csn_pin=0)
-    #radio2.begin(ce_pin=8, csn_pin=0)
-
-    radio2.setRetries(15,15)
-
-    radio2.setPayloadSize(8)
-    radio2.setChannel(120)
-    radio2.setDataRate(NRF24.BR_2MBPS)
-    #radio2.setDataRate(NRF24.BR_250KBPS)
-    #radio2.setPALevel(NRF24.PA_MIN)
-   # radio2.setPALevel(NRF24.PA_HIGH)
-    radio2.setPALevel(NRF24.PA_LOW)
-
-    radio2.openWritingPipe(pipes[1])
-    radio2.openReadingPipe(1, pipes[0])
-
-    radio2.setCRCLength(NRF24.CRC_16)
-    #radio2.disableCRC()
-
-    radio2.printDetails()
-
-    radio2.flush_rx()
-
-    time.sleep(0.01)
-
-    log.debug(radio2.whatHappened())
-
-    radio2.startListening()
-
-    c=1
+    c = 1
 
     log.info("Entering main loop")
 
