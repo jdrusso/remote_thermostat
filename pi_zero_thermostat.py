@@ -421,6 +421,9 @@ if __name__=="__main__":
         log.info("Waiting on temp")
         retries = 0
         while True:
+            raw_local_temp, raw_remote_temp = 0.0, 0.0
+            calibrated_local_temp, calibrated_remote_temp = 0.0, 0.0
+
             try:
                 raw_remote_temp = get_remote_temp(radio2)
                 calibrated_remote_temp = calibrate_temp(raw_remote_temp, *remote_thermometer_calibration)
