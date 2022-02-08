@@ -15,13 +15,13 @@ from thermostat import Thermostat
 import logging
 from rich.logging import RichHandler
 
-# Set up logging
+# Set up logging. This makes a file that the logger will write to
 logfile_console = Console(
     file=open(f'logfiles/thermostat_{time.strftime("%m_%d_%Y-%H_%M")}.log', "a"),
     log_time_format="[%x_%X]",
 )
 
-
+# By specifying two loggers here, I can display some stuff to the console, and other stuff to a logfile.
 # Props to https://stackoverflow.com/a/11784984
 FORMAT = "%(message)s"
 # noinspection PyArgumentList
@@ -44,6 +44,9 @@ def temp_log(self, message, *args, **kws):
 logging.Logger.temp = temp_log
 log = logging.getLogger()
 
+thermostat_thermometer_calibration = (38, 211.4)
+remote_thermometer_calibration = (40, 210.76)
+pipes = [[0xC2, 0xC2, 0xC2, 0xC2, 0xC2], [0xF0, 0xF0, 0xF0, 0xF0, 0xF0]]
 
 if __name__ == "__main__":
 
@@ -52,8 +55,6 @@ if __name__ == "__main__":
         cs=1, dc=20, rst=21,
         rotation=90, offset_top=3,
     )
-    width = display.width
-    height = display.height
 
     # Initialize thermostat
     thermostat = Thermostat(temp_control_pin=22, temp_select_pin=18, fan_pin=22)
@@ -67,7 +68,6 @@ if __name__ == "__main__":
     thermostat.all_off()
 
     # Initialize radio
-    pipes = [[0xC2, 0xC2, 0xC2, 0xC2, 0xC2], [0xF0, 0xF0, 0xF0, 0xF0, 0xF0]]
     radio2 = open_radio(
         ce_pin=19,
         csn_pin=0,
@@ -81,9 +81,6 @@ if __name__ == "__main__":
     log.info("Entering main loop")
 
     sensor = W1ThermSensor()
-
-    thermostat_thermometer_calibration = (38, 211.4)
-    remote_thermometer_calibration = (40, 210.76)
 
     invalid_responses = 0
     while True:
@@ -109,7 +106,7 @@ if __name__ == "__main__":
                 recv_temp = calibrated_remote_temp
                 break
 
-            except Exception:
+            except TimeoutError:
                 # If you fail to read the radio, reset everything and try again a couple times.
 
                 log.error("Failed to get response - trying again...")

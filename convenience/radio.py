@@ -26,7 +26,7 @@ def get_remote_temp(radio):
             log.error(
                 f"Timeout reached! {wait_threshold} seconds since last temperature received"
             )
-            raise Exception
+            raise TimeoutError
 
     log.debug("Received")
 
