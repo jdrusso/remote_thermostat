@@ -3,24 +3,22 @@
 #
 import json
 import RPi.GPIO as GPIO
-
 GPIO.setmode(GPIO.BCM)
 from lib_nrf24 import NRF24
 import time
 import spidev
-
 import datetime
 from PIL import Image, ImageDraw, ImageFont
 import ST7735
-
 from w1thermsensor import W1ThermSensor
-
 from rich.console import Console
 
 logfile_console = Console(
     file=open(f'logfiles/thermostat_{time.strftime("%m_%d_%Y-%H_%M")}.log', "a"),
     log_time_format="[%x_%X]",
 )
+
+from thermostat import Thermostat
 
 # Props to https://stackoverflow.com/a/11784984
 import logging
@@ -81,184 +79,6 @@ def calibrate_temp(fahrenheit, low, high):
     temp_f = to_fahrenheit(corrected_temp)
 
     return temp_f
-
-
-# Scheduling: A time range, associated with a temperature range
-class Schedule:
-    def __init__(self, default_range=[70, 72, 1]):
-
-        self.log = logging.getLogger("Schedule")
-        self.log.setLevel(logging.DEBUG)
-        self.log.info("Schedule object being created")
-
-        self.times = []
-        self.temps = []
-
-        self.add_range(default_range, "default")
-
-    def get_current_target_temp_range(self, current_time=None):
-        """Obtains the target temperature for the current time. Returns the default if no match is found."""
-
-        current_range = self.default_range
-
-        # You shouldn't pass a time in general, but this lets me test it more easily.
-        if current_time is None:
-            current_time = datetime.datetime.now().time()
-
-        for time_idx, time_range in enumerate(self.times):
-            if time_range[0] < current_time <= time_range[1]:
-                current_range = self.temps[time_idx]
-                break
-            else:
-                pass
-
-
-        return current_range
-
-    def add_range(self, temp_range, time_range, t_src=0):
-
-        thermometer_source = ["local", "remote"][t_src]
-
-        self.log.info("Adding schedule")
-
-        # Allow setting a default range, in case no temp range has been set for the current time
-        if time_range == "default":
-            self.log.info(f"Setting default range to {temp_range}")
-            self.default_range = temp_range
-            return
-
-        else:
-
-            # If the time interval spans midnight, split it up into two
-            midnight_pm = datetime.time(23, 59)
-            midnight_am = datetime.time(0, 0)
-            # TODO: Best way to handle midnight crossover? I can automatically split a time range that crosses midnight
-            #   but that's a little janky
-            # This is a hell of an if statement
-            if midnight_pm > time_range[0] > time_range[1] > midnight_am:
-
-                # Split the time range [start, end] into [start, midnight] [midnight, end]
-                new_ranges = [
-                    [time_range[0], midnight_pm],
-                    [datetime.time(0, 0), time_range[1]],
-                ]
-
-                # And add as two independent schedule entries
-                for time_range in new_ranges:
-                    self.log.info(f"Adding range {time_range} with a midnight split")
-                    self.times.append(time_range)
-                    self.temps.append(temp_range)
-
-            else:
-                # Add the new time and temp ranges
-                self.log.info(f"Adding time range {time_range}")
-                self.times.append(time_range)
-                self.temps.append(temp_range)
-
-                # Make sure these lists didn't get out of whack somehow
-                assert len(self.times) == len(self.temps)
-
-            # TODO: Check that the current time range doesn't overlap anything existing...
-            # TODO: Validate that time_range and temp_range are legitimate
-            #   Time_range should both be times.
-            #   Temp_range should have valid temps, and a valid hysteresis
-
-            return
-
-
-class Thermostat:
-    def __init__(self, temp_select_pin, temp_control_pin, fan_pin):
-
-
-        self.temp_select_pin = temp_select_pin
-        self.temp_control_pin = temp_control_pin
-        self.fan_pin = fan_pin
-        GPIO.setup(temp_select_pin, GPIO.OUT)
-        GPIO.setup(temp_control_pin, GPIO.OUT)
-        GPIO.setup(fan_pin, GPIO.OUT)
-
-        self.heating = False
-        self.cooling = False
-        self.fan_is_on = False
-
-        self.schedule = Schedule()
-        self.log = logging.getLogger("Thermostat")
-        self.log.setLevel(logging.DEBUG)
-
-    def fan_on(self):
-        GPIO.output(self.fan_pin, True)
-        self.fan_is_on = True
-
-    def fan_off(self):
-        GPIO.output(self.fan_pin, False)
-        self.fan_is_on = False
-
-    def heat_on(self):
-        GPIO.output(self.temp_select_pin, False)
-        GPIO.output(self.temp_control_pin, True)
-
-        self.fan_on()
-        self.heating = True
-        self.cooling = False
-
-    def ac_on(self):
-        GPIO.output(self.temp_select_pin, True)
-        GPIO.output(self.temp_control_pin, True)
-
-        self.fan_on()
-        self.heating = False
-        self.cooling = True
-
-    def all_off(self, reset_hysteresis=True):
-        GPIO.output(self.temp_control_pin, False)
-        GPIO.output(self.temp_select_pin, False)
-        self.fan_off()
-
-        if reset_hysteresis:
-            self.heating = False
-            self.cooling = False
-
-    def _set_target_temp_range(self, low_temp, high_temp, hysteresis=1):
-        # This is called via update_state, and shouldn't be called directly.
-
-        assert low_temp < high_temp, "Invalid temp range -- provide as [low, high]"
-        assert low_temp < (
-            high_temp - hysteresis
-        ), "Temp range too small for hysteresis"
-
-        self.low_temp = low_temp
-        self.high_temp = high_temp
-        self.hysteresis = hysteresis
-
-    def update_state(self, current_temp):
-
-        self._set_target_temp_range(*self.schedule.get_current_target_temp_range())
-
-        self.log.info(
-            "Thermostat state updating -- {%.2f} ({%.2f}) | [%.2f - %.2f]"
-            % (current_temp, self.local_temp, self.low_temp, self.high_temp)
-        )
-
-        if current_temp < self.low_temp:
-            self.log.critical("Heat, on")
-            self.heat_on()
-
-        elif current_temp > self.high_temp:
-            self.log.critical("AC, on")
-            self.ac_on()
-
-        elif self.heating and current_temp > self.low_temp + self.hysteresis:
-            self.log.critical("Off, warm")
-            self.all_off()
-
-        elif self.cooling and current_temp < self.high_temp - self.hysteresis:
-            self.log.critical("Off, cool")
-            self.all_off()
-
-        # In hysteresis
-        else:
-            self.log.critical("Off, maintaining")
-            pass
 
 
 def get_remote_temp(radio):
