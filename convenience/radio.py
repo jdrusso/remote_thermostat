@@ -1,6 +1,6 @@
 import logging
 import time
-from lib_nrf24 import NRF24
+from convenience.lib_nrf24 import NRF24
 import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM)
 import spidev
