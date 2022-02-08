@@ -15,7 +15,7 @@ from thermostat import Thermostat
 import logging
 from rich.logging import RichHandler
 
-### Set up logging
+# Set up logging
 logfile_console = Console(
     file=open(f'logfiles/thermostat_{time.strftime("%m_%d_%Y-%H_%M")}.log', "a"),
     log_time_format="[%x_%X]",
@@ -24,6 +24,7 @@ logfile_console = Console(
 
 # Props to https://stackoverflow.com/a/11784984
 FORMAT = "%(message)s"
+# noinspection PyArgumentList
 logging.basicConfig(
     format=FORMAT,
     level=logging.DEBUG,
