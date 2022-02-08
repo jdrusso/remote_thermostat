@@ -376,7 +376,7 @@ if __name__ == "__main__":
     thermostat = Thermostat(temp_control_pin=22, temp_select_pin=18, fan_pin=22)
 
     with open("schedule.json", "r") as schedule_file:
-        schedules = json.load(schedule_file)["schedule"]
+        schedules = json.load(schedule_file)["schedules"]
         for schedule in schedules:
             thermostat.schedule.add_range(
                 [*schedule["temp_range"], schedule["hysteresis"]],
