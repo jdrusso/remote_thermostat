@@ -12,6 +12,7 @@ from rich.console import Console
 
 from convenience.conversions import *
 from convenience.radio import *
+from convenience.fonts import *
 
 logfile_console = Console(
     file=open(f'logfiles/thermostat_{time.strftime("%m_%d_%Y-%H_%M")}.log', "a"),
