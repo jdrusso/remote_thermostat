@@ -506,11 +506,11 @@ if __name__=="__main__":
             status = "OFF"
             stat_color = (255, 255, 255)
 
-        # i.e., if you're using the local temp
+        # Make the temperature color yellow if you had to fall back to local temp
         if retries > 2:
-            stat_color = (255, 215, 0)
-
-        cur_color = (255,255,255)
+            cur_color = (255, 215, 0)
+        else:
+            cur_color = (255,255,255)
 
         img = Image.new('RGB', (width, height), color=(0,0,0))
         draw = ImageDraw.Draw(img)
