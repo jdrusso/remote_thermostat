@@ -198,13 +198,15 @@ class Thermostat:
         self.heating = False
         self.cooling = True
 
-    def all_off(self):
+    def all_off(self, reset_hysteresis=True):
         # self.temp_control_pin.off()
         GPIO.output(self.temp_control_pin, False)
         GPIO.output(self.temp_select_pin, False)
         self.fan_off()
-        self.heating = False
-        self.cooling = False
+
+        if reset_hysteresis:
+            self.heating = False
+            self.cooling = False
 
     def set_target_temp_range(self, low_temp, high_temp, hysteresis=1):
         # This is deprecated now in favor of using a Schedule()
@@ -440,7 +442,7 @@ if __name__=="__main__":
                 retries += 1
 
                 if retries > 2:
-                    # thermostat.all_off()
+                    # thermostat.all_off(reset_hysteresis=False)
                     log.error("Couldn't get temperature. Falling back to local.")
                     recv_temp = local_temp
                 # recv_temp = get_remote_temp(radio2)
