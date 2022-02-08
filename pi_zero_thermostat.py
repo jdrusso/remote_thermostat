@@ -505,6 +505,11 @@ if __name__=="__main__":
         else:
             status = "OFF"
             stat_color = (255, 255, 255)
+
+        # i.e., if you're using the local temp
+        if retries > 2:
+            stat_color = (255, 215, 0)
+
         cur_color = (255,255,255)
 
         img = Image.new('RGB', (width, height), color=(0,0,0))
