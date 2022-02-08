@@ -2,6 +2,7 @@ import ST7735
 from convenience.fonts import *
 from PIL import Image, ImageDraw
 
+
 class Colors:
 
     RED = (225, 6, 0)
@@ -9,15 +10,22 @@ class Colors:
     WHITE = (255, 255, 255)
     YELLOW = (255, 215, 0)
 
-class Display:
 
-    def __init__(self,
-                 port, cs, dc, rst,
-                 rotation, offset_top,
-                 width=128, height=128,
-                 backlight=22,
-                 invert=False,
-                 spi_speed_hz=24000000):
+class Display:
+    def __init__(
+        self,
+        port,
+        cs,
+        dc,
+        rst,
+        rotation,
+        offset_top,
+        width=128,
+        height=128,
+        backlight=22,
+        invert=False,
+        spi_speed_hz=24000000,
+    ):
 
         self.display = ST7735.ST7735(
             port=port,
@@ -64,12 +72,17 @@ class Display:
         draw.text((0, 0), MESSAGE, font=init_font, fill=(255, 255, 255))
         self.refresh_display(img)
 
-    def update_thermostat_display(self,
-                                  low_temp, high_temp,
-                                  local_temp, cur_temp,
-                                  status,
-                                  last_update,
-                                  cur_color, stat_color):
+    def update_thermostat_display(
+        self,
+        low_temp,
+        high_temp,
+        local_temp,
+        cur_temp,
+        status,
+        last_update,
+        cur_color,
+        stat_color,
+    ):
 
         # Update display with
         #   Target

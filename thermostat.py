@@ -2,9 +2,9 @@ import RPi.GPIO as GPIO
 import logging
 from scheduler import Schedule
 
+
 class Thermostat:
     def __init__(self, temp_select_pin, temp_control_pin, fan_pin):
-
 
         self.temp_select_pin = temp_select_pin
         self.temp_control_pin = temp_control_pin

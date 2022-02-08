@@ -1,9 +1,10 @@
 import logging
 import time
 from convenience.lib_nrf24 import NRF24
-import RPi.GPIO as GPIO
-GPIO.setmode(GPIO.BCM)
 import spidev
+import RPi.GPIO as GPIO
+
+GPIO.setmode(GPIO.BCM)
 
 log = logging.getLogger()
 

@@ -52,8 +52,11 @@ if __name__ == "__main__":
 
     display = Display(
         port=0,
-        cs=1, dc=20, rst=21,
-        rotation=90, offset_top=3,
+        cs=1,
+        dc=20,
+        rst=21,
+        rotation=90,
+        offset_top=3,
     )
 
     # Initialize thermostat
@@ -186,5 +189,5 @@ if __name__ == "__main__":
             status=status,
             last_update=datetime.datetime.now().time(),
             cur_color=cur_color,
-            stat_color=stat_color
+            stat_color=stat_color,
         )

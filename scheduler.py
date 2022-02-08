@@ -30,7 +30,6 @@ class Schedule:
             else:
                 pass
 
-
         return current_range
 
     def add_range(self, temp_range, time_range, t_src=0):
