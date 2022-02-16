@@ -12,6 +12,8 @@ from convenience.display import Display
 from convenience.display import Colors
 from thermostat import Thermostat
 
+import os.path
+
 import logging
 from rich.logging import RichHandler
 
@@ -41,6 +43,29 @@ def temp_log(self, message, *args, **kws):
         self._log(TEMP_LEVEL_NUM, message, args, **kws)
 
 
+def update_thermostat_schedule(_thermostat, _schedule_path, last_updated=None):
+
+    if last_updated is not None:
+        file_update = os.path.getmtime(_schedule_path)
+        need_update = file_update > last_updated
+    else:
+        need_update = True
+
+    if need_update:
+
+        _thermostat.schedule.clear_ranges()
+
+        with open(_schedule_path, "r") as schedule_file:
+            schedules = json.load(schedule_file)["schedules"]
+            for schedule in schedules:
+                _thermostat.schedule.add_range(
+                    [*schedule["temp_range"], schedule["hysteresis"]],
+                    [datetime.time(*schedule["start"]), datetime.time(*schedule["end"])],
+                )
+
+    return file_update
+
+
 logging.Logger.temp = temp_log
 log = logging.getLogger()
 
@@ -59,15 +84,14 @@ if __name__ == "__main__":
         offset_top=3,
     )
 
+    last_modified_time = -1
+
     # Initialize thermostat
     thermostat = Thermostat(temp_control_pin=22, temp_select_pin=18, fan_pin=22)
-    with open("schedule.json", "r") as schedule_file:
-        schedules = json.load(schedule_file)["schedules"]
-        for schedule in schedules:
-            thermostat.schedule.add_range(
-                [*schedule["temp_range"], schedule["hysteresis"]],
-                [datetime.time(*schedule["start"]), datetime.time(*schedule["end"])],
-            )
+
+    schedule_path = 'schedule.json'
+    last_file_update = update_thermostat_schedule(_thermostat=thermostat, _schedule_path=schedule_path)
+
     thermostat.all_off()
 
     # Initialize radio
@@ -145,6 +169,10 @@ if __name__ == "__main__":
             log.info(
                 f"Local|  Current: {raw_local_temp:.2f}. Calibrated: {calibrated_local_temp:.2f}"
             )
+
+            # Check the schedule file for changes
+            last_file_update = update_thermostat_schedule(_thermostat=thermostat, _schedule_path=schedule_path,
+                                                          last_updated=last_file_update)
 
             # Only update thermostat state if we're actually getting input
             thermostat.update_state(current_temp=cur_temp)

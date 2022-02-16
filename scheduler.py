@@ -1,6 +1,8 @@
 import datetime
 import logging
 
+# TODO: Allow specifying a source "local" or "remote" along with schedules
+
 # Scheduling: A time range, associated with a temperature range
 class Schedule:
     def __init__(self, default_range=[70, 72, 1]):
@@ -81,3 +83,10 @@ class Schedule:
             #   Temp_range should have valid temps, and a valid hysteresis
 
             return
+
+    def clear_ranges(self):
+
+        self.log.info("Clearing schedule ranges")
+
+        self.times = []
+        self.temps = []
