@@ -45,8 +45,8 @@ def temp_log(self, message, *args, **kws):
 
 def update_thermostat_schedule(_thermostat, _schedule_path, last_updated=None):
 
+    file_update = os.path.getmtime(_schedule_path)
     if last_updated is not None:
-        file_update = os.path.getmtime(_schedule_path)
         need_update = file_update > last_updated
     else:
         need_update = True
