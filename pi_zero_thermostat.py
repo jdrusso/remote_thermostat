@@ -14,6 +14,10 @@ from thermostat import Thermostat
 
 import os.path
 
+topic = 'home-assistant/thermostat'
+local_temp_topic = f'{topic}/local_temperature'
+remote_temp_topic = f'{topic}/remote_temperature'
+
 import logging
 from rich.logging import RichHandler
 
@@ -117,6 +121,7 @@ if __name__ == "__main__":
             raw_local_temp, *thermostat_thermometer_calibration
         )
         thermostat.local_temp = calibrated_local_temp
+        thermostat.mqtt_client.publish(local_temp_topic, f"{thermostat.local_temp:.1f}")
 
         log.info("Waiting on temp")
         retries = 0
@@ -131,10 +136,13 @@ if __name__ == "__main__":
                 )
 
                 recv_temp = calibrated_remote_temp
+                thermostat.mqtt_client.publish(remote_temp_topic, f"{recv_temp:.1f}")
                 break
 
             except TimeoutError:
                 # If you fail to read the radio, reset everything and try again a couple times.
+
+                thermostat.mqtt_client.publish(remote_temp_topic, "")
 
                 log.error("Failed to get response - trying again...")
                 radio2.stopListening()
